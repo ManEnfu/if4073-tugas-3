@@ -42,7 +42,7 @@ classdef aplikasi_exported < matlab.apps.AppBase
                 app.ImageEdge.ImageSource = cat(3, app.EdgeImage, app.EdgeImage, app.EdgeImage) * 255;
     
                 % Generate mask image
-                app.MaskImage = app.GenerateMaskImage(app.EdgeImage, app.SegmentationMethodDropDown.Value);
+                app.MaskImage = app.GenerateMaskImage(app.EdgeImage, app.SegmentationMethodDropDown.Value, app.V2Slider.Value);
                 app.ImageMask.ImageSource = cat(3, app.MaskImage, app.MaskImage, app.MaskImage) * 255;
     
                 % Apply mask to original image
@@ -94,12 +94,13 @@ classdef aplikasi_exported < matlab.apps.AppBase
             end
         end
 
-        function result = GenerateMaskImage(~, aImage, aMethod)
+        function result = GenerateMaskImage(~, aImage, aMethod, aThreshold)
             switch aMethod
-                case 'Hole Fill'
-                    result = uint8(imfill(aImage,'holes'));
-                case 'Threshold Fill'
-                    result = uint8(ones([size(aImage, 1), size(aImage, 2)]));
+                case 'Dilation Fill'
+                    vStructuringElement = strel('disk',round(aThreshold));
+                    vImage = imdilate(aImage, vStructuringElement);
+                    vImage = imerode(vImage, vStructuringElement);
+                    result = uint8(imfill(vImage,'holes'));
                 otherwise
                     result = uint8(ones([size(aImage, 1), size(aImage, 2)]));
             end
@@ -116,7 +117,7 @@ classdef aplikasi_exported < matlab.apps.AppBase
             end
 
             switch app.SegmentationMethodDropDown.Value
-                case 'Threshold Fill'
+                case 'Dilation Fill'
                     app.V2Slider.Enable = 'on';
                 otherwise
                     app.V2Slider.Enable = 'off';
@@ -196,12 +197,12 @@ classdef aplikasi_exported < matlab.apps.AppBase
 
             % Create SegmentationMethodDropDown
             app.SegmentationMethodDropDown = uidropdown(app.InputPanel);
-            app.SegmentationMethodDropDown.Items = {'Hole Fill', 'Threshold Fill'};
+            app.SegmentationMethodDropDown.Items = {'Dilation Fill'};
             app.SegmentationMethodDropDown.Editable = 'on';
             app.SegmentationMethodDropDown.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
             app.SegmentationMethodDropDown.BackgroundColor = [1 1 1];
             app.SegmentationMethodDropDown.Position = [162 154 587 22];
-            app.SegmentationMethodDropDown.Value = 'Hole Fill';
+            app.SegmentationMethodDropDown.Value = 'Dilation Fill';
 
             % Create EdgeThresholdSliderLabel
             app.EdgeThresholdSliderLabel = uilabel(app.InputPanel);
