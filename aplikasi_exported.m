@@ -100,13 +100,13 @@ classdef aplikasi_exported < matlab.apps.AppBase
                     vStructuringElement = strel('disk',round(aThreshold));
                     vImage = imdilate(aImage, vStructuringElement);
                     vImage = imerode(vImage, vStructuringElement);
-                    result = uint8(imfill(vImage,'holes'));
+                    result = uint8(imfill(vImage,8,'holes'));
                 otherwise
                     result = uint8(ones([size(aImage, 1), size(aImage, 2)]));
             end
         end
 
-        function EnableVariables(app)
+        function ToggleSliders(app)
             switch app.EdgeDetectionMethodDropDown.Value
                 case 'LoG'
                     app.V3Slider.Enable = 'on';
@@ -129,6 +129,11 @@ classdef aplikasi_exported < matlab.apps.AppBase
     % Callbacks that handle component events
     methods (Access = private)
 
+        % Code that executes after component creation
+        function startupFcn(app)
+            app.ToggleSliders();
+        end
+
         % Button pushed function: BrowseImageButton
         function BrowseImageButtonPushed(app, event)
             [file,path] = uigetfile({'*.png;*.jpg;*.jpeg','Images'});
@@ -143,7 +148,7 @@ classdef aplikasi_exported < matlab.apps.AppBase
         % Value changed function: EdgeDetectionMethodDropDown, 
         % SegmentationMethodDropDown, V1Slider, V2Slider, V3Slider
         function SegmentationMethodDropDownValueChanged(app, event)
-            app.EnableVariables();
+            app.ToggleSliders();
             app.Generate();
         end
     end
@@ -225,7 +230,6 @@ classdef aplikasi_exported < matlab.apps.AppBase
             app.V2Slider = uislider(app.InputPanel);
             app.V2Slider.Limits = [0 125];
             app.V2Slider.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
-            app.V2Slider.Enable = 'off';
             app.V2Slider.Position = [162 92 576 3];
             app.V2Slider.Value = 4;
 
@@ -238,7 +242,6 @@ classdef aplikasi_exported < matlab.apps.AppBase
             app.V3Slider = uislider(app.InputPanel);
             app.V3Slider.Limits = [0 50];
             app.V3Slider.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
-            app.V3Slider.Enable = 'off';
             app.V3Slider.Position = [162 50 576 3];
             app.V3Slider.Value = 1;
 
@@ -287,6 +290,9 @@ classdef aplikasi_exported < matlab.apps.AppBase
 
             % Register the app with App Designer
             registerApp(app, app.UIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @startupFcn)
 
             if nargout == 0
                 clear app
