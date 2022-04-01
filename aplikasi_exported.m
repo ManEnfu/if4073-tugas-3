@@ -3,13 +3,6 @@ classdef aplikasi_exported < matlab.apps.AppBase
     % Properties that correspond to app components
     properties (Access = public)
         UIFigure                       matlab.ui.Figure
-        NLabel                         matlab.ui.control.Label
-        V2Slider                       matlab.ui.control.Slider
-        EdgeThresholdLabel             matlab.ui.control.Label
-        V1Slider                       matlab.ui.control.Slider
-        BlurLevelLabel                 matlab.ui.control.Label
-        SegmentationMethodDropDown     matlab.ui.control.DropDown
-        SegmentationMethodDropDownLabel  matlab.ui.control.Label
         GridLayout                     matlab.ui.container.GridLayout
         BrowseImageButton              matlab.ui.control.Button
         SettingsPanel                  matlab.ui.container.Panel
@@ -18,6 +11,15 @@ classdef aplikasi_exported < matlab.apps.AppBase
         V4Slider                       matlab.ui.control.Slider
         NLabel_2                       matlab.ui.control.Label
         V3Slider                       matlab.ui.control.Slider
+        NLabel                         matlab.ui.control.Label
+        V2Slider                       matlab.ui.control.Slider
+        EdgeThresholdLabel             matlab.ui.control.Label
+        V1Slider                       matlab.ui.control.Slider
+        BlurLevelLabel                 matlab.ui.control.Label
+        SegmentationMethodDropDown     matlab.ui.control.DropDown
+        SegmentationMethodDropDownLabel  matlab.ui.control.Label
+        EdgeDetectionMethodDropDown    matlab.ui.control.DropDown
+        EdgeDetectionMethodDropDownLabel  matlab.ui.control.Label
         OutputPanel                    matlab.ui.container.Panel
         GridLayout2                    matlab.ui.container.GridLayout
         ImageBlur                      matlab.ui.control.Image
@@ -26,8 +28,6 @@ classdef aplikasi_exported < matlab.apps.AppBase
         ImageMask                      matlab.ui.control.Image
         ImageEdge                      matlab.ui.control.Image
         ImageSource                    matlab.ui.control.Image
-        EdgeDetectionMethodDropDown    matlab.ui.control.DropDown
-        EdgeDetectionMethodDropDownLabel  matlab.ui.control.Label
     end
 
     
@@ -129,24 +129,25 @@ classdef aplikasi_exported < matlab.apps.AppBase
 
         function result = GenerateMaskImage(~, aImage, aMethod, aThreshold)
             switch aMethod
-                case 'Dilation Fill'
-                    vStructuringElement = strel('disk',round(aThreshold));
-                    vImage = imdilate(aImage, vStructuringElement);
-                    vImage = imerode(vImage, vStructuringElement);
-                    result = uint8(imfill(vImage,8,'holes'));
+                case 'Dilate-Thin-Fill-Erode'
+                    vImage = imclearborder(aImage);
+                    vImage = imdilate(vImage, strel('disk', round(aThreshold)));
+                    vImage = bwmorph(vImage, 'thin', Inf);
+                    vImage = imfill(vImage, 'holes');
+                    vImage = imerode(vImage, strel('disk', 2));
+                    result = uint8(vImage);
+                case 'Close-Fill-Erode'
+                    vImage = imclearborder(aImage);
+                    vImage = imclose(vImage, strel('disk', round(aThreshold)));
+                    vImage = imfill(vImage, 8, 'holes');
+                    vImage = imerode(vImage, strel('disk', 2));
+                    result = uint8(vImage);
                 otherwise
                     result = uint8(ones([size(aImage, 1), size(aImage, 2)]));
             end
         end
 
         function ToggleSliders(app)
-            switch app.PreprocessMethodDropDown.Value
-                case 'None'
-                    app.V1Slider.Enable = 'off';
-                otherwise
-                    app.V1Slider.Enable = 'on';
-            end
-
             switch app.EdgeDetectionMethodDropDown.Value
                 case 'LoG'
                     app.V3Slider.Enable = 'on';
@@ -154,13 +155,6 @@ classdef aplikasi_exported < matlab.apps.AppBase
                     app.V3Slider.Enable = 'on';
                 otherwise
                     app.V3Slider.Enable = 'off';
-            end
-
-            switch app.SegmentationMethodDropDown.Value
-                case 'Dilation Fill'
-                    app.V4Slider.Enable = 'on';
-                otherwise
-                    app.V4Slider.Enable = 'off';
             end
         end
     end
@@ -277,12 +271,12 @@ classdef aplikasi_exported < matlab.apps.AppBase
 
             % Create SegmentationMethodDropDown
             app.SegmentationMethodDropDown = uidropdown(app.SettingsPanel);
-            app.SegmentationMethodDropDown.Items = {'Dilation Fill'};
+            app.SegmentationMethodDropDown.Items = {'Dilate-Thin-Fill-Erode', 'Close-Fill-Erode'};
             app.SegmentationMethodDropDown.Editable = 'on';
             app.SegmentationMethodDropDown.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
             app.SegmentationMethodDropDown.BackgroundColor = [1 1 1];
             app.SegmentationMethodDropDown.Position = [162 195 587 22];
-            app.SegmentationMethodDropDown.Value = 'Dilation Fill';
+            app.SegmentationMethodDropDown.Value = 'Close-Fill-Erode';
 
             % Create BlurLevelLabel
             app.BlurLevelLabel = uilabel(app.SettingsPanel);
@@ -326,7 +320,6 @@ classdef aplikasi_exported < matlab.apps.AppBase
 
             % Create V4Slider
             app.V4Slider = uislider(app.SettingsPanel);
-            app.V4Slider.Limits = [0 50];
             app.V4Slider.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
             app.V4Slider.Position = [161 49 576 3];
             app.V4Slider.Value = 10;
@@ -338,12 +331,12 @@ classdef aplikasi_exported < matlab.apps.AppBase
 
             % Create PreprocessMethodDropDown
             app.PreprocessMethodDropDown = uidropdown(app.SettingsPanel);
-            app.PreprocessMethodDropDown.Items = {'None', 'Gaussian Filter', 'Disk Filter'};
+            app.PreprocessMethodDropDown.Items = {'Gaussian Filter', 'Disk Filter'};
             app.PreprocessMethodDropDown.Editable = 'on';
             app.PreprocessMethodDropDown.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
             app.PreprocessMethodDropDown.BackgroundColor = [1 1 1];
             app.PreprocessMethodDropDown.Position = [162 258 587 22];
-            app.PreprocessMethodDropDown.Value = 'None';
+            app.PreprocessMethodDropDown.Value = 'Gaussian Filter';
 
             % Create BrowseImageButton
             app.BrowseImageButton = uibutton(app.GridLayout, 'push');
