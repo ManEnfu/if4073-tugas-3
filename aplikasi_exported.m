@@ -43,39 +43,50 @@ classdef aplikasi_exported < matlab.apps.AppBase
     
     methods (Access = private)
         
+        % Fungsi utama
         function Generate(app)
             if (app.Loaded)
-                % Generate grayscale image
+                % Ubah gambar masukan menjadi grayscale
                 app.GrayImage = rgb2gray(app.CurrentImage);
                 app.ImageGray.ImageSource = cat(3, app.GrayImage, app.GrayImage, app.GrayImage);
 
-                % Generate blurred image
+                % Lakukan blurring untuk menghilangkan derau
                 app.BlurImage = app.GenerateBlurImage(app.GrayImage, app.PreprocessMethodDropDown.Value, app.V1Slider.Value);
                 app.ImageBlur.ImageSource = cat(3, app.BlurImage, app.BlurImage, app.BlurImage);
 
-                % Generate edge image
+                % Buat gambar biner tepi dengan teknik deteksi tepi yang
+                % dipilih
                 app.EdgeImage = app.GenerateEdgeImage(app.BlurImage, app.EdgeDetectionMethodDropDown.Value, app.V2Slider.Value, app.V3Slider.Value);
                 app.ImageEdge.ImageSource = cat(3, app.EdgeImage, app.EdgeImage, app.EdgeImage) * 255;
     
-                % Generate mask image
+                % Buat gambar biner mask dengan teknik segmentasi (region
+                % filling) yang dipilih
                 app.MaskImage = app.GenerateMaskImage(app.EdgeImage, app.SegmentationMethodDropDown.Value, app.V4Slider.Value);
                 app.ImageMask.ImageSource = cat(3, app.MaskImage, app.MaskImage, app.MaskImage) * 255;
     
-                % Apply mask to original image
+                % Terapkan gambar biner mask pada gambar masukan
                 app.ResultImage = app.CurrentImage .* app.MaskImage;
                 app.ImageResult.ImageSource = app.ResultImage;
             end
         end
 
+        % Fungsi blurring (pemrosesan awal)
         function result = GenerateBlurImage(~, aImage, aMethod, aLevel)
             if (aLevel > 0)
                 switch aMethod
+
+                    % Blurring dengan filter rata-rata
                     case 'Average Filter'
                         result = imfilter(aImage, fspecial('average', round(aLevel)), 'replicate');
+
+                    % Blurring dengan filter disk
                     case 'Disk Filter'
                         result = imfilter(aImage, fspecial('disk', aLevel), 'replicate');
+
+                    % Blurring dengan filter gaussian
                     case 'Gaussian Filter'
                         result = imgaussfilt(aImage, aLevel);
+
                     otherwise
                         result = aImage;
                 end
@@ -84,11 +95,16 @@ classdef aplikasi_exported < matlab.apps.AppBase
             end
         end
 
+        % Fungsi pembuatan gambar biner tepi
         function result = GenerateEdgeImage(~, aImage, aMethod, aThreshold, aNC)
             switch aMethod
+
+                % Deteksi tepi dengan metode Laplace
                 case 'Laplace'
                     H = [0 1 0; 1 -4 1; 0 1 0];
                     result = uint8(convn(double(aImage), double(H), "same") > aThreshold);
+
+                % Deteksi tepi dengan metode Laplacian of Gaussian
                 case 'LoG'
                     n = round(aNC);
                     s = n/5;
@@ -101,6 +117,8 @@ classdef aplikasi_exported < matlab.apps.AppBase
                     L = [0 1 0; 1 -4 1; 0 1 0];
                     H = (convn(double(H), double(L), "same"));
                     result = uint8(convn(double(aImage), double(H), "same") > aThreshold);
+
+                % Deteksi tepi dengan metode Sobel
                 case 'Sobel'
                     c = round(aNC);
                     Hx = [-1 0 1; -c 0 c; -1 0 1];
@@ -108,40 +126,79 @@ classdef aplikasi_exported < matlab.apps.AppBase
                     Jx = convn(double(aImage), double(Hx), "same");
                     Jy = convn(double(aImage), double(Hy), "same");
                     result = uint8(abs(Jx) + abs(Jy) > aThreshold);
+
+                % Deteksi tepi dengan metode Prewitt
                 case 'Prewitt'
                     Hx = [-1 0 1; -1 0 1; -1 0 1];
                     Hy = [1 1 1; 0 0 0; -1 -1 -1];
                     Jx = convn(double(aImage), double(Hx), "same");
                     Jy = convn(double(aImage), double(Hy), "same");
                     result = uint8(abs(Jx) + abs(Jy) > aThreshold);
+
+                % Deteksi tepi dengan metode Roberts
                 case 'Roberts'
                     Hx = [1 0; 0 -1];
                     Hy = [0 1; -1 0];
                     Jx = convn(double(aImage), double(Hx), "same");
                     Jy = convn(double(aImage), double(Hy), "same");
                     result = uint8(abs(Jx) + abs(Jy) > aThreshold);
+
+                % Deteksi tepi dengan metode Canny
                 case 'Canny'
                     result = edge(aImage, 'canny', aThreshold/255);
+
                 otherwise
                     result = aImage;
             end
         end
 
+        % Fungsi pembuatan gambar biner mask
         function result = GenerateMaskImage(~, aImage, aMethod, aThreshold)
             switch aMethod
+
+                % Buat mask dengan metode 1, untuk gambar dengan banyak
+                % tepi
                 case 'Dilate-Thin-Fill-Erode'
+
+                    % Bersihkan pixel-pixel pada tepi gambar
                     vImage = imclearborder(aImage);
+
+                    % Lakukan dilatasi pada gambar supaya tepi-tepi menjadi
+                    % terhubung, kemudian lakukan thinning supaya tepi yang
+                    % terhubung kembali tipis
                     vImage = imdilate(vImage, strel('disk', round(aThreshold)));
                     vImage = bwmorph(vImage, 'thin', Inf);
+
+                    % Isi daerah-daerah yang dikelilingi tepi terhubung
                     vImage = imfill(vImage, 'holes');
+
+                    % Lakukan erosi pada gambar untuk menghilangkan
+                    % tepi-tepi yang tidak mengelilingi daerah
                     vImage = imerode(vImage, strel('disk', 2));
+
+                    % Ubah tipe data menjadi uint8
                     result = uint8(vImage);
+
+                % Buat mask dengan metode 2, untuk gambar sederhana
                 case 'Close-Fill-Erode'
+
+                    % Bersihkan pixel-pixel pada tepi gambar
                     vImage = imclearborder(aImage);
+
+                    % Lakukan operasi morphological closing pada gambar
+                    % supaya tepi-tepi menjadi terhubung
                     vImage = imclose(vImage, strel('disk', round(aThreshold)));
+
+                    % Isi daerah-daerah yang dikelilingi tepi terhubung
                     vImage = imfill(vImage, 8, 'holes');
+
+                    % Lakukan erosi pada gambar untuk menghilangkan
+                    % tepi-tepi yang tidak mengelilingi daerah
                     vImage = imerode(vImage, strel('disk', 2));
+
+                    % Ubah tipe data menjadi uint8
                     result = uint8(vImage);
+                    
                 otherwise
                     result = uint8(ones([size(aImage, 1), size(aImage, 2)]));
             end
