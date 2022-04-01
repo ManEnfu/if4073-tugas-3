@@ -75,10 +75,6 @@ classdef aplikasi_exported < matlab.apps.AppBase
             if (aLevel > 0)
                 switch aMethod
 
-                    % Blurring dengan filter rata-rata
-                    %case 'Average Filter'
-                    %    result = imfilter(aImage, fspecial('average', round(aLevel)), 'replicate');
-
                     % Blurring dengan filter disk
                     case 'Disk Filter'
                         result = imfilter(aImage, fspecial('disk', aLevel), 'replicate');
@@ -108,7 +104,6 @@ classdef aplikasi_exported < matlab.apps.AppBase
                 case 'LoG'
                     n = round(aNC);
                     s = n/5;
-                    %s = 2.0 * s * s;
                     r = (n-1) / 2;
                     X = repmat(-r:r, n, 1);
                     Y = repmat(transpose(-r:r), 1, n);
