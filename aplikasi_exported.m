@@ -76,8 +76,8 @@ classdef aplikasi_exported < matlab.apps.AppBase
                 switch aMethod
 
                     % Blurring dengan filter rata-rata
-                    case 'Average Filter'
-                        result = imfilter(aImage, fspecial('average', round(aLevel)), 'replicate');
+                    %case 'Average Filter'
+                    %    result = imfilter(aImage, fspecial('average', round(aLevel)), 'replicate');
 
                     % Blurring dengan filter disk
                     case 'Disk Filter'
@@ -108,14 +108,13 @@ classdef aplikasi_exported < matlab.apps.AppBase
                 case 'LoG'
                     n = round(aNC);
                     s = n/5;
-                    s = 2.0 * s * s;
+                    %s = 2.0 * s * s;
                     r = (n-1) / 2;
-                    X = repmat([-r:r], n, 1);
-                    Y = repmat(transpose([-r:r]), 1, n);
-                    H = 1/(s*pi) * exp(-(X.*X+Y.*Y)/s);
-                    H = H / sum(sum(H));
-                    L = [0 1 0; 1 -4 1; 0 1 0];
-                    H = (convn(double(H), double(L), "same"));
+                    X = repmat(-r:r, n, 1);
+                    Y = repmat(transpose(-r:r), 1, n);
+                    t = -(X.*X+Y.*Y)/(2.0*s*s);
+                    H = (-1/(pi*s*s*s*s)) * ((1+t) .* exp(t));
+                    H = H - mean2(H);
                     result = uint8(convn(double(aImage), double(H), "same") > aThreshold);
 
                 % Deteksi tepi dengan metode Sobel
