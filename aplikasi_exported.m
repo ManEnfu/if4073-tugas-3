@@ -343,7 +343,10 @@ classdef aplikasi_exported < matlab.apps.AppBase
             % Create V1Slider
             app.V1Slider = uislider(app.SettingsPanel);
             app.V1Slider.Limits = [0 25];
+            app.V1Slider.MajorTicks = [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25];
+            app.V1Slider.MajorTickLabels = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25'};
             app.V1Slider.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
+            app.V1Slider.MinorTicks = [];
             app.V1Slider.Position = [161 175 576 3];
 
             % Create EdgeThresholdLabel
@@ -355,8 +358,9 @@ classdef aplikasi_exported < matlab.apps.AppBase
             app.V2Slider = uislider(app.SettingsPanel);
             app.V2Slider.Limits = [0 255];
             app.V2Slider.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
+            app.V2Slider.MinorTicks = [];
             app.V2Slider.Position = [161 133 576 3];
-            app.V2Slider.Value = 15;
+            app.V2Slider.Value = 16;
 
             % Create NLabel
             app.NLabel = uilabel(app.SettingsPanel);
@@ -366,7 +370,10 @@ classdef aplikasi_exported < matlab.apps.AppBase
             % Create V3Slider
             app.V3Slider = uislider(app.SettingsPanel);
             app.V3Slider.Limits = [0 25];
+            app.V3Slider.MajorTicks = [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25];
+            app.V3Slider.MajorTickLabels = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25'};
             app.V3Slider.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
+            app.V3Slider.MinorTicks = [];
             app.V3Slider.Position = [161 91 576 3];
             app.V3Slider.Value = 2;
 
@@ -378,6 +385,7 @@ classdef aplikasi_exported < matlab.apps.AppBase
             % Create V4Slider
             app.V4Slider = uislider(app.SettingsPanel);
             app.V4Slider.ValueChangedFcn = createCallbackFcn(app, @SegmentationMethodDropDownValueChanged, true);
+            app.V4Slider.MinorTicks = [];
             app.V4Slider.Position = [161 49 576 3];
             app.V4Slider.Value = 10;
 
