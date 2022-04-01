@@ -97,36 +97,46 @@ classdef aplikasi_exported < matlab.apps.AppBase
 
                 % Deteksi tepi dengan metode Laplace
                 case 'Laplace'
+                    % Filter
                     H = [0 1 0; 1 -4 1; 0 1 0];
                     result = uint8(convn(double(aImage), double(H), "same") > aThreshold);
 
                 % Deteksi tepi dengan metode Laplacian of Gaussian
                 case 'LoG'
+                    % Ukuran filter
                     n = round(aNC);
+                    % Standar deviasi
                     s = n/5;
                     r = (n-1) / 2;
                     X = repmat(-r:r, n, 1);
                     Y = repmat(transpose(-r:r), 1, n);
                     t = -(X.*X+Y.*Y)/(2.0*s*s);
                     H = (-1/(pi*s*s*s*s)) * ((1+t) .* exp(t));
+                    % Geser nilai sehingga jumlah elemen nol
                     H = H - mean2(H);
                     result = uint8(convn(double(aImage), double(H), "same") > aThreshold);
 
                 % Deteksi tepi dengan metode Sobel
                 case 'Sobel'
                     c = round(aNC);
+                    % Filter horizontal
                     Hx = [-1 0 1; -c 0 c; -1 0 1];
+                    % Filter vertikal
                     Hy = [1 c 1; 0 0 0; -1 -c -1];
                     Jx = convn(double(aImage), double(Hx), "same");
                     Jy = convn(double(aImage), double(Hy), "same");
+                    % Jumlahkan kedua hasil konvolusi
                     result = uint8(abs(Jx) + abs(Jy) > aThreshold);
 
                 % Deteksi tepi dengan metode Prewitt
                 case 'Prewitt'
+                    % Filter horizontal
                     Hx = [-1 0 1; -1 0 1; -1 0 1];
+                    % Filter vertikal
                     Hy = [1 1 1; 0 0 0; -1 -1 -1];
                     Jx = convn(double(aImage), double(Hx), "same");
                     Jy = convn(double(aImage), double(Hy), "same");
+                    % Jumlahkan kedua hasil konvolusi
                     result = uint8(abs(Jx) + abs(Jy) > aThreshold);
 
                 % Deteksi tepi dengan metode Roberts
@@ -135,6 +145,7 @@ classdef aplikasi_exported < matlab.apps.AppBase
                     Hy = [0 1; -1 0];
                     Jx = convn(double(aImage), double(Hx), "same");
                     Jy = convn(double(aImage), double(Hy), "same");
+                    % Jumlahkan kedua hasil konvolusi
                     result = uint8(abs(Jx) + abs(Jy) > aThreshold);
 
                 % Deteksi tepi dengan metode Canny
